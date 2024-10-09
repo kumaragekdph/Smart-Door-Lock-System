@@ -1,0 +1,53 @@
+% Clear command window, close figures, and clear workspace
+clc; close; clear;
+
+% Create a webcam object
+camera = webcam;
+
+% Load the pre-trained neural network for face recognition
+load trainedNetwork;
+
+% Create a face detector object
+faceDetector = vision.CascadeObjectDetector;
+
+% Confidence threshold for face recognition
+confidenceThreshold = 1; % Adjust as needed
+
+% Infinite loop for continuous face recognition
+while true
+    % Capture a snapshot from the webcam
+    currentSnapshot = snapshot(camera);
+    
+    % Detect faces in the current snapshot
+    boundingBoxes = step(faceDetector, currentSnapshot);
+    
+    % Check if any faces are detected
+    if sum(sum(boundingBoxes)) ~= 0
+        % Extract the first detected face
+        croppedFace = imcrop(currentSnapshot, boundingBoxes(1,:));
+        
+        % Resize the face image to the required input size for the neural network
+        resizedFace = imresize(croppedFace, [227, 227]);
+        
+        % Classify the face using the pre-trained neural network
+        [predictedLabel, scores] = classify(trainedNetwork, resizedFace);
+
+        % Check if the confidence is below the threshold
+        if max(scores) < confidenceThreshold
+            % Display the current snapshot with the predicted label
+            image(currentSnapshot);
+            title('Not Recognized');
+            drawnow;
+        else
+            % Display the current snapshot with the predicted label
+            image(currentSnapshot);
+            title(char(predictedLabel));
+            drawnow;
+        end
+    else
+        % Display the current snapshot with a message indicating no face detected
+        image(currentSnapshot);
+        title('No Face Detected');
+        drawnow;
+    end
+end
