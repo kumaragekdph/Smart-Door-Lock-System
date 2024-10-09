@@ -1,0 +1,34 @@
+% Clear the workspace
+clc
+clear all
+close all
+
+% Turn off unnecessary warnings
+warning off
+
+% Load the pre-trained AlexNet model
+pretrainedAlexNet = alexnet;
+
+% Get the layers of the pre-trained AlexNet
+pretrainedLayers = pretrainedAlexNet.Layers;
+
+% Replace the last fully connected layer for a new classification task
+modifiedLayers = pretrainedLayers;
+modifiedLayers(23) = fullyConnectedLayer(2);  % Assuming 2 classes for classification
+modifiedLayers(25) = classificationLayer;
+
+% Set up an imageDatastore for the image dataset
+imageFolder = 'Database';
+imageDS = imageDatastore(imageFolder, 'IncludeSubfolders', true, 'LabelSource', 'foldernames');
+
+% Set up training options
+trainingOpts = trainingOptions('sgdm', ...
+    'InitialLearnRate', 0.001, ...
+    'MaxEpochs', 20, ...
+    'MiniBatchSize', 64);
+
+% Train the modified network on the dataset
+trainedNetwork = trainNetwork(imageDS, modifiedLayers, trainingOpts);
+
+% Save the trained network
+save trainedNetwork;
