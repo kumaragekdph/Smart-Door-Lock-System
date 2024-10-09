@@ -1,0 +1,58 @@
+% Clear command window, close all figures, and turn off warnings
+clc;
+clear all;
+close all;
+warning off;
+
+% Create a webcam object
+camera = webcam;
+
+% Create a face detector object
+faceDetector = vision.CascadeObjectDetector;
+
+% Set the maximum number of images to capture
+maxImages = 50;
+imageCount = 0;
+
+while true
+    % Capture a snapshot from the webcam
+    currentSnapshot = snapshot(camera);
+
+    % Detect faces in the current snapshot
+    boundingBoxes = step(faceDetector, currentSnapshot);
+
+    % Check if any faces are detected
+    if sum(sum(boundingBoxes)) ~= 0
+        % Check if the desired number of images is reached
+        if imageCount >= maxImages
+            break;
+        else
+            % Extract the first detected face
+            croppedFace = imcrop(currentSnapshot, boundingBoxes(1, :));
+
+            % Resize the face image
+            resizedFace = imresize(croppedFace, [227, 227]);
+
+            % Generate a filename for the image
+            filename = strcat(num2str(imageCount), '.bmp');
+
+            % Save the resized face image
+            imwrite(resizedFace, filename);
+
+            % Display the resized face image
+            imshow(resizedFace);
+            drawnow;
+
+            % Increment the image count
+            imageCount = imageCount + 1;
+        end
+    else
+        % Display the original snapshot if no face is detected
+        imshow(currentSnapshot);
+        drawnow;
+    end
+end
+
+% Release resources
+clear camera;
+release(faceDetector);
